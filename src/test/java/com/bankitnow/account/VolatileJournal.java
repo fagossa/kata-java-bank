@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 class VolatileJournal implements AccountJournal {
 
@@ -25,7 +26,8 @@ class VolatileJournal implements AccountJournal {
     }
 
     @Override
-    public void historyOf(String transactionId, PrintStream out, Function<Transaction, String> formatter) {
+    public void historyOf(String transactionId, PrintStream out, Supplier<String> columns, Function<Transaction, String> formatter) {
+        out.println(columns.get());
         final Queue<Transaction> transactions = store.computeIfAbsent(transactionId, (key) -> new LinkedList<>());
         transactions.stream().forEach((transaction) ->
                 out.println(formatter.apply(transaction))

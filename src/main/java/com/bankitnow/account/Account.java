@@ -6,6 +6,7 @@ import javaslang.control.Try;
 import java.io.PrintStream;
 import java.time.OffsetDateTime;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 class Account {
 
@@ -17,6 +18,10 @@ class Account {
         this.id = id;
         this.balance = balance;
         this.journal = journal;
+    }
+
+    Balance balance() {
+        return balance;
     }
 
     void deposit(Balance valueToDeposit, OffsetDateTime aDateTime) {
@@ -35,8 +40,8 @@ class Account {
                 );
     }
 
-    void history(PrintStream out, Function<Transaction, String> formatter) {
-        journal.historyOf(id, out, formatter);
+    void history(PrintStream out, Supplier<String> columns, Function<Transaction, String> formatter) {
+        journal.historyOf(this.id, out, columns, formatter);
     }
 
     private Try<Transaction> sendTransactionHaving(String accountId, Transaction.Type type, Balance operation, Try<Balance> newBalance, OffsetDateTime dateTime) {
