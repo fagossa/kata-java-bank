@@ -33,3 +33,13 @@ In order to check my operations
 As a bank client
 I want to see the history (operation, date, amount, balance)  of my operations
 ```
+
+## About the implementation
+
+### Master branch
+
+This is a simple implementation based on Pojos.
+
+### with-akka
+
+This one is based on [Akka actors](http://doc.akka.io/docs/akka/2.4.10/general/actors.html).
