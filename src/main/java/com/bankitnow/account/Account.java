@@ -7,7 +7,6 @@ import akka.japi.pf.ReceiveBuilder;
 import com.bankitnow.money.Balance;
 import javaslang.control.Try;
 
-import java.io.PrintStream;
 import java.time.OffsetDateTime;
 import java.util.function.Function;
 import java.util.function.Supplier;
