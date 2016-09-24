@@ -11,6 +11,8 @@ import java.util.Collection;
 
 import static com.bankitnow.money.Currency.EUR;
 import static com.bankitnow.money.Currency.USD;
+import static javaslang.control.Option.none;
+import static javaslang.control.Option.some;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
@@ -19,8 +21,12 @@ public class BalanceTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Balance.of(10, USD), Balance.of(10, USD), Option.some(Balance.of(20, USD)), Option.some(Balance.of(0, USD))},
-                {Balance.of(10, USD), Balance.of(10, EUR), Option.none(), Option.none()}
+                {Balance.of(10, USD), Balance.of(10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
+                {Balance.of(10, USD), Balance.of(-10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
+                {Balance.of(-10, USD), Balance.of(10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
+                {Balance.of(-10, USD), Balance.of(-10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
+                {Balance.of(10, USD), Balance.of(10, EUR), none(), none()},
+                {Balance.of(10, EUR), Balance.of(10, USD), none(), none()}
         });
     }
 

@@ -1,36 +1,48 @@
 package com.bankitnow.account;
 
 import com.bankitnow.money.Balance;
+import javaslang.control.Try;
 
+import java.io.PrintStream;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 class Account {
 
     private String id;
-    private OffsetDateTime openingDate;
     private Balance balance;
+    private AccountJournal journal;
 
-
-    Account(String id, OffsetDateTime openingDate, Balance balance) {
+    Account(String id, Balance balance, AccountJournal journal) {
         this.id = id;
-        this.openingDate = openingDate;
         this.balance = balance;
+        this.journal = journal;
     }
 
-    public String id() {
-        return id;
+    void deposit(Balance valueToDeposit, OffsetDateTime aDateTime) {
+        Try<Balance> maybeBalance = balance.plus(valueToDeposit);
+        sendTransactionHaving(id, Transaction.Type.Deposit, valueToDeposit, maybeBalance, aDateTime);
     }
 
-    public OffsetDateTime openingDate() {
-        return openingDate;
+    void withdraw(Balance valueToWithdraw, OffsetDateTime aDateTime) {
+        Try<Balance> maybeBalance = balance.minus(valueToWithdraw);
+        sendTransactionHaving(id, Transaction.Type.Withdraw, valueToWithdraw, maybeBalance, aDateTime);
     }
 
-    Balance balance() {
-        return balance;
+    void history(PrintStream out, TransactionFormatter formatter) {
+        journal.historyOf(id, out, formatter);
     }
 
-    public static String withRandomId() {
-        return UUID.randomUUID().toString();
+    private void sendTransactionHaving(String accountId, Transaction.Type type, Balance operation, Try<Balance> newBalance, OffsetDateTime dateTime) {
+        newBalance
+                .flatMap((total) ->
+                        new Transaction.TransactionBuilder()
+                                .at(dateTime)
+                                .forAccount(accountId)
+                                .withOperation(operation)
+                                .withNewBalance(total)
+                                .withType(type)
+                                .build()
+                )
+                .flatMap(transaction -> journal.send(transaction));
     }
 }

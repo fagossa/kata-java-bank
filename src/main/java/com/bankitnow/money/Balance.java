@@ -4,18 +4,16 @@ import javaslang.control.Try;
 
 import java.util.Objects;
 
+import static java.lang.Math.*;
+
 public class Balance {
 
     private final int amt;
     private final Currency currency;
 
     private Balance(int amt, Currency currency) {
-        this.amt = amt;
+        this.amt = abs(amt);
         this.currency = currency;
-    }
-
-    public Currency currency() {
-        return currency;
     }
 
     public int amt() {
@@ -24,13 +22,13 @@ public class Balance {
 
     public Try<Balance> plus(Balance newValue) {
         return this.currency == newValue.currency
-                ? Try.success(of(amt + newValue.amt, currency))
+                ? Try.success(of(amt + (newValue.amt), currency))
                 : Try.failure(new NotSameCurrency(this.currency, newValue.currency));
     }
 
     public Try<Balance> minus(Balance newValue) {
         return this.currency == newValue.currency
-                ? Try.success(of(amt - newValue.amt, currency))
+                ? Try.success(of(amt - (newValue.amt), currency))
                 : Try.failure(new NotSameCurrency(this.currency, newValue.currency));
     }
 
