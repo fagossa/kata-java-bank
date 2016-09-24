@@ -1,5 +1,9 @@
 package com.bankitnow.account;
 
+import akka.actor.AbstractLoggingActor;
+import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.japi.pf.ReceiveBuilder;
 import com.bankitnow.money.Balance;
 import javaslang.control.Try;
 
@@ -8,53 +12,69 @@ import java.time.OffsetDateTime;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-class Account {
+class Account extends AbstractLoggingActor {
 
     private String id;
     private Balance balance;
-    private AccountJournal journal;
+    private ActorRef journal;
 
-    Account(String id, Balance balance, AccountJournal journal) {
+    Account(String id, Balance balance, ActorRef journal) {
         this.id = id;
         this.balance = balance;
         this.journal = journal;
+
+        receive(
+                ReceiveBuilder
+                        .match(AccountEvents.Deposit.class, this::onDeposit)
+                        .match(AccountEvents.GetBalance.class, this::onBalance)
+                        .match(AccountEvents.Withdraw.class, this::onWithdraw)
+                        .match(AccountEvents.History.class, this::onHistory)
+                        .build()
+        );
     }
 
-    Balance balance() {
-        return balance;
+    static Props props(String id, Balance balance, ActorRef journal) {
+        return Props.create(Account.class, id, balance, journal);
     }
 
-    void deposit(Balance valueToDeposit, OffsetDateTime aDateTime) {
+    private void onBalance(AccountEvents.GetBalance getBalance) {
+        sender().tell(balance, ActorRef.noSender());
+    }
+
+    private void onDeposit(AccountEvents.Deposit deposit) {
+        Balance valueToDeposit = deposit.valueToDeposit;
+        OffsetDateTime aDateTime = deposit.aDateTime;
         Try<Balance> maybeBalance = balance.plus(valueToDeposit);
-        sendTransactionHaving(id, Transaction.Type.Deposit, valueToDeposit, maybeBalance, aDateTime)
-                .forEach((transaction) ->
-                        balance = transaction.balance()
-                );
+        maybeBalance.forEach((newBalance) -> {
+            balance = newBalance;
+            sendTransactionHaving(id, Transaction.Type.Deposit, valueToDeposit, newBalance, aDateTime);
+        });
     }
 
-    void withdraw(Balance valueToWithdraw, OffsetDateTime aDateTime) {
+    private void onWithdraw(AccountEvents.Withdraw withdraw) {
+        Balance valueToWithdraw = withdraw.valueToDeposit;
+        OffsetDateTime aDateTime = withdraw.aDateTime;
         Try<Balance> maybeBalance = balance.minus(valueToWithdraw);
-        sendTransactionHaving(id, Transaction.Type.Withdraw, valueToWithdraw, maybeBalance, aDateTime)
-                .forEach((transaction) ->
-                        balance = transaction.balance()
-                );
+        maybeBalance.forEach((newBalance) -> {
+            balance = newBalance;
+            sendTransactionHaving(id, Transaction.Type.Withdraw, valueToWithdraw, newBalance, aDateTime);
+        });
     }
 
-    void history(PrintStream out, Supplier<String> columns, Function<Transaction, String> formatter) {
-        journal.historyOf(this.id, out, columns, formatter);
+    private void onHistory(AccountEvents.History history) {
+        Supplier<String> columns = history.columns;
+        Function<Transaction, String> formatter = history.formatter;
+        journal.tell(new AccountEvents.HistoryForAccount(this.id, columns, formatter), ActorRef.noSender());
     }
 
-    private Try<Transaction> sendTransactionHaving(String accountId, Transaction.Type type, Balance operation, Try<Balance> newBalance, OffsetDateTime dateTime) {
-        return newBalance
-                .flatMap((total) ->
-                        new Transaction.TransactionBuilder()
-                                .at(dateTime)
-                                .forAccount(accountId)
-                                .withOperation(operation)
-                                .withNewBalance(total)
-                                .withType(type)
-                                .build()
-                )
-                .flatMap(transaction -> journal.send(transaction));
+    private void sendTransactionHaving(String accountId, Transaction.Type type, Balance operation,
+                                       Balance total, OffsetDateTime dateTime) {
+        final Try<Transaction> maybeTransaction = new Transaction.TransactionBuilder()
+                .at(dateTime).forAccount(accountId)
+                .withOperation(operation)
+                .withNewBalance(total).withType(type).build();
+        maybeTransaction.forEach(transaction ->
+                journal.tell(transaction, ActorRef.noSender())
+        );
     }
 }
