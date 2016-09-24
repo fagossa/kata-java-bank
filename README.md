@@ -1,4 +1,4 @@
-# Bank account kata
+# Bank account kata [![Build Status](https://travis-ci.org/fagossa/kata-java-bank.svg?branch=master)](https://travis-ci.org/fagossa/kata-java-bank)
 
 Think of your personal bank account experience When in doubt, go for the simplest solution.
  
