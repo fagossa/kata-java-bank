@@ -5,6 +5,7 @@ import javaslang.control.Try;
 
 import java.io.PrintStream;
 import java.time.OffsetDateTime;
+import java.util.function.Function;
 
 class Account {
 
@@ -28,7 +29,7 @@ class Account {
         sendTransactionHaving(id, Transaction.Type.Withdraw, valueToWithdraw, maybeBalance, aDateTime);
     }
 
-    void history(PrintStream out, TransactionFormatter formatter) {
+    void history(PrintStream out, Function<Transaction, String> formatter) {
         journal.historyOf(id, out, formatter);
     }
 

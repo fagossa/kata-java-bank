@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Function;
 
 class VolatileJournal implements AccountJournal {
 
@@ -24,10 +25,10 @@ class VolatileJournal implements AccountJournal {
     }
 
     @Override
-    public void historyOf(String transactionId, PrintStream out, TransactionFormatter formatter) {
+    public void historyOf(String transactionId, PrintStream out, Function<Transaction, String> formatter) {
         final Set<Transaction> transactions = store.computeIfAbsent(transactionId, (key) -> new ConcurrentSkipListSet<>());
         transactions.stream().forEach((transaction) ->
-                out.println(formatter.format(transaction))
+                out.println(formatter.apply(transaction))
         );
     }
 }

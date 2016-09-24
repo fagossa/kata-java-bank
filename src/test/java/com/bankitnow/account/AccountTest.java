@@ -1,7 +1,6 @@
 package com.bankitnow.account;
 
 import com.bankitnow.money.Balance;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -11,6 +10,7 @@ import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static com.bankitnow.money.Currency.EUR;
@@ -116,7 +116,15 @@ public class AccountTest {
         anAccount.deposit(Balance.of(5, USD), aMoment);
         anAccount.deposit(Balance.of(10, USD), aMoment);
         anAccount.withdraw(Balance.of(2, USD), aMoment);
-        anAccount.history(out, new DefaultTransactionFormatter());
+        anAccount.history(out, (transaction) ->
+                String.format(
+                        "%s, %s, %s, %s",
+                        transaction.balance().amt(),
+                        transaction.operation().amt(),
+                        transaction.type(),
+                        transaction.dateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                )
+        );
 
         // Then
         verify(out, times(1)).println("5, 5, Deposit, 2013-05-26T10:22:17+02:00");
