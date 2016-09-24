@@ -1,6 +1,7 @@
 package com.bankitnow.account;
 
 import com.bankitnow.money.Balance;
+import javaslang.control.Try;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -22,10 +23,10 @@ import static org.mockito.Mockito.*;
 public class AccountTest {
 
     @Mock
-    private AccountJournal journal;
+    PrintStream out;
 
     @Mock
-    PrintStream out;
+    private AccountJournal journal;
 
     @Test
     public void should_increase_balance_when_deposit() {
@@ -43,6 +44,7 @@ public class AccountTest {
                 .build().get();
 
         // When
+        when(journal.send(any(Transaction.class))).thenReturn(Try.success(expectedTransaction));
         Balance depositBalance = Balance.of(100, USD);
         anAccount.deposit(depositBalance, aMoment);
 
@@ -82,6 +84,7 @@ public class AccountTest {
                 .build().get();
 
         // When
+        when(journal.send(any(Transaction.class))).thenReturn(Try.success(expectedTransaction));
         Balance withdrawBalance = Balance.of(30, USD);
         anAccount.withdraw(withdrawBalance, aMoment);
 
@@ -119,8 +122,8 @@ public class AccountTest {
         anAccount.history(out, (transaction) ->
                 String.format(
                         "%s, %s, %s, %s",
-                        transaction.balance().amt(),
                         transaction.operation().amt(),
+                        transaction.balance().amt(),
                         transaction.type(),
                         transaction.dateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 )

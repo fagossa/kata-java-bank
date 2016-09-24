@@ -21,20 +21,26 @@ class Account {
 
     void deposit(Balance valueToDeposit, OffsetDateTime aDateTime) {
         Try<Balance> maybeBalance = balance.plus(valueToDeposit);
-        sendTransactionHaving(id, Transaction.Type.Deposit, valueToDeposit, maybeBalance, aDateTime);
+        sendTransactionHaving(id, Transaction.Type.Deposit, valueToDeposit, maybeBalance, aDateTime)
+                .forEach((transaction) ->
+                        balance = transaction.balance()
+                );
     }
 
     void withdraw(Balance valueToWithdraw, OffsetDateTime aDateTime) {
         Try<Balance> maybeBalance = balance.minus(valueToWithdraw);
-        sendTransactionHaving(id, Transaction.Type.Withdraw, valueToWithdraw, maybeBalance, aDateTime);
+        sendTransactionHaving(id, Transaction.Type.Withdraw, valueToWithdraw, maybeBalance, aDateTime)
+                .forEach((transaction) ->
+                        balance = transaction.balance()
+                );
     }
 
     void history(PrintStream out, Function<Transaction, String> formatter) {
         journal.historyOf(id, out, formatter);
     }
 
-    private void sendTransactionHaving(String accountId, Transaction.Type type, Balance operation, Try<Balance> newBalance, OffsetDateTime dateTime) {
-        newBalance
+    private Try<Transaction> sendTransactionHaving(String accountId, Transaction.Type type, Balance operation, Try<Balance> newBalance, OffsetDateTime dateTime) {
+        return newBalance
                 .flatMap((total) ->
                         new Transaction.TransactionBuilder()
                                 .at(dateTime)
