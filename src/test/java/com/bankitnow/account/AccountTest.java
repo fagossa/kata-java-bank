@@ -1,6 +1,5 @@
 package com.bankitnow.account;
 
-import com.bankitnow.money.Balance;
 import javaslang.control.Try;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,34 +13,18 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import static com.bankitnow.money.Currency.EUR;
-import static com.bankitnow.money.Currency.USD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AccountTest {
+public class AccountTest implements MoneySamples {
 
     @Mock
     PrintStream out;
 
     @Mock
     private AccountJournal anEventJournal;
-
-    private Balance zeroDollars = Balance.of(0, USD);
-
-    private Balance fiveDollars = Balance.of(5, USD);
-
-    private Balance tenDollars = Balance.of(10, USD);
-
-    private Balance fifteenDollars = Balance.of(15, USD);
-
-    private Balance twentyDollars = Balance.of(20, USD);
-
-    private Balance fiveEuros = Balance.of(5, EUR);
-
-    private Balance tenEuros = Balance.of(10, EUR);
 
     @Test
     public void should_increase_balance_when_deposit() {
