@@ -4,31 +4,18 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestProbe;
-import com.bankitnow.money.Balance;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
-import static com.bankitnow.money.Currency.EUR;
-import static com.bankitnow.money.Currency.USD;
+import static java.time.OffsetDateTime.now;
 
-public class AccountTest {
+public class AccountTest implements DataSamples {
 
     static ActorSystem system;
-
-    private Balance zeroDollars = Balance.of(0, USD);
-    private Balance fiveDollars = Balance.of(5, USD);
-    private Balance tenDollars = Balance.of(10, USD);
-    private Balance fifteenDollars = Balance.of(15, USD);
-    private Balance twentyDollars = Balance.of(20, USD);
-    private Balance fiveEuros = Balance.of(5, EUR);
-    private Balance tenEuros = Balance.of(10, EUR);
 
     @BeforeClass
     public static void setup() {
@@ -46,12 +33,12 @@ public class AccountTest {
         new JavaTestKit(system) {{
             // Given
             final TestProbe anEventJournal = new TestProbe(system, "eventJournal");
-            String anId = UUID.randomUUID().toString();
+            String anId = aRandomId();
             ActorRef anAccount = system.actorOf(
                     Account.props(anId, tenDollars, anEventJournal.ref()),
                     "Account_" + anId
             );
-            OffsetDateTime aMoment = OffsetDateTime.now();
+            OffsetDateTime aMoment = now();
             Transaction expectedTransaction = new Transaction.TransactionBuilder()
                     .forAccount(anId)
                     .withOperation(tenDollars)
@@ -76,7 +63,7 @@ public class AccountTest {
         new JavaTestKit(system) {{
             // Given
             final TestProbe anEventJournal = new TestProbe(system, "eventJournal");
-            String anId = UUID.randomUUID().toString();
+            String anId = aRandomId();
             ActorRef anAccount = system.actorOf(
                     Account.props(anId, tenDollars, anEventJournal.ref()),
                     "Account_" + anId
@@ -84,7 +71,7 @@ public class AccountTest {
 
             // When
             final TestProbe worker = new TestProbe(system, "worker");
-            worker.send(anAccount, new AccountEvents.Deposit(tenEuros, OffsetDateTime.now()));
+            worker.send(anAccount, new AccountEvents.Deposit(tenEuros, now()));
 
             // Then
             anEventJournal.expectNoMsg();
@@ -96,8 +83,8 @@ public class AccountTest {
         new JavaTestKit(system) {{
             // Given
             final TestProbe anEventJournal = new TestProbe(system, "eventJournal");
-            String anId = UUID.randomUUID().toString();
-            OffsetDateTime aMoment = OffsetDateTime.now();
+            String anId = aRandomId();
+            OffsetDateTime aMoment = now();
             ActorRef anAccount = system.actorOf(
                     Account.props(anId, twentyDollars, anEventJournal.ref()),
                     "Account_" + anId
@@ -126,7 +113,7 @@ public class AccountTest {
         new JavaTestKit(system) {{
             // Given
             final TestProbe anEventJournal = new TestProbe(system, "eventJournal");
-            String anId = UUID.randomUUID().toString();
+            String anId = aRandomId();
             ActorRef anAccount = system.actorOf(
                     Account.props(anId, tenDollars, anEventJournal.ref()),
                     "Account_" + anId
@@ -134,7 +121,7 @@ public class AccountTest {
 
             // When
             final TestProbe worker = new TestProbe(system, "worker");
-            worker.send(anAccount, new AccountEvents.Withdraw(fiveEuros, OffsetDateTime.now()));
+            worker.send(anAccount, new AccountEvents.Withdraw(fiveEuros, now()));
 
             // Then
             anEventJournal.expectNoMsg();
@@ -146,10 +133,10 @@ public class AccountTest {
         new JavaTestKit(system) {{
             // Given
             final TestProbe worker = new TestProbe(system, "worker");
-            String anId = UUID.randomUUID().toString();
+            String anId = aRandomId();
             final ActorRef volatileJournalRef = system.actorOf(VolatileJournal.props(worker.ref()), "Journal_" + anId);
             ActorRef anAccount = system.actorOf(Account.props(anId, zeroDollars, volatileJournalRef), "Account_" + anId);
-            OffsetDateTime aMoment = aDateTime();
+            OffsetDateTime aMoment = aFixedDateTime();
 
             // When
             worker.send(anAccount, new AccountEvents.Deposit(twentyDollars, aMoment));
@@ -174,9 +161,4 @@ public class AccountTest {
         }};
     }
 
-    private OffsetDateTime aDateTime() {
-        final LocalDateTime localDateTime = LocalDateTime.parse("2016-09-24T10:22:17");
-        final ZoneOffset zoneOffset = ZoneOffset.of("+02:00");
-        return OffsetDateTime.of(localDateTime, zoneOffset);
-    }
 }
