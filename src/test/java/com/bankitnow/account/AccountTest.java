@@ -48,13 +48,12 @@ public class AccountTest implements DataSamples {
                     .build().get();
 
             // When
-            final TestProbe worker = new TestProbe(system, "worker");
-            worker.send(anAccount, new AccountEvents.Deposit(tenDollars, aMoment));
-            worker.send(anAccount, new AccountEvents.GetBalance());
+            send(anAccount, new AccountEvents.Deposit(tenDollars, aMoment));
+            send(anAccount, new AccountEvents.GetBalance());
 
             // Then
             anEventJournal.expectMsg(expectedTransaction);
-            worker.expectMsg(twentyDollars);
+            expectMsgEquals(twentyDollars);
         }};
     }
 
@@ -70,11 +69,10 @@ public class AccountTest implements DataSamples {
             );
 
             // When
-            final TestProbe worker = new TestProbe(system, "worker");
-            worker.send(anAccount, new AccountEvents.Deposit(tenEuros, now()));
+            send(anAccount, new AccountEvents.Deposit(tenEuros, now()));
 
             // Then
-            anEventJournal.expectNoMsg();
+            anEventJournal.expectNoMsg(untilTimeout);
         }};
     }
 
@@ -98,13 +96,12 @@ public class AccountTest implements DataSamples {
                     .build().get();
 
             // When
-            final TestProbe worker = new TestProbe(system, "worker");
-            worker.send(anAccount, new AccountEvents.Withdraw(fiveDollars, aMoment));
-            worker.send(anAccount, new AccountEvents.GetBalance());
+            send(anAccount, new AccountEvents.Withdraw(fiveDollars, aMoment));
+            send(anAccount, new AccountEvents.GetBalance());
 
             // Then
             anEventJournal.expectMsg(expectedTransaction);
-            worker.expectMsg(fifteenDollars);
+            expectMsgEquals(fifteenDollars);
         }};
     }
 
@@ -120,11 +117,10 @@ public class AccountTest implements DataSamples {
             );
 
             // When
-            final TestProbe worker = new TestProbe(system, "worker");
-            worker.send(anAccount, new AccountEvents.Withdraw(fiveEuros, now()));
+            send(anAccount, new AccountEvents.Withdraw(fiveEuros, now()));
 
             // Then
-            anEventJournal.expectNoMsg();
+            anEventJournal.expectNoMsg(untilTimeout);
         }};
     }
 
@@ -132,17 +128,16 @@ public class AccountTest implements DataSamples {
     public void should_print_story() {
         new JavaTestKit(system) {{
             // Given
-            final TestProbe worker = new TestProbe(system, "worker");
             String anId = aRandomId();
-            final ActorRef volatileJournalRef = system.actorOf(VolatileJournal.props(worker.ref()), "Journal_" + anId);
+            final ActorRef volatileJournalRef = system.actorOf(VolatileJournal.props(getTestActor()), "Journal_" + anId);
             ActorRef anAccount = system.actorOf(Account.props(anId, zeroDollars, volatileJournalRef), "Account_" + anId);
             OffsetDateTime aMoment = aFixedDateTime();
 
             // When
-            worker.send(anAccount, new AccountEvents.Deposit(twentyDollars, aMoment));
-            worker.send(anAccount, new AccountEvents.Deposit(tenDollars, aMoment));
-            worker.send(anAccount, new AccountEvents.Withdraw(fiveDollars, aMoment));
-            worker.send(anAccount, new AccountEvents.History(
+            send(anAccount, new AccountEvents.Deposit(twentyDollars, aMoment));
+            send(anAccount, new AccountEvents.Deposit(tenDollars, aMoment));
+            send(anAccount, new AccountEvents.Withdraw(fiveDollars, aMoment));
+            send(anAccount, new AccountEvents.History(
                     () -> "AMT, BALANCE, TYPE, DATE",
                     (transaction) -> String.format(
                             "%s, %s, %s, %s",
@@ -154,10 +149,10 @@ public class AccountTest implements DataSamples {
             ));
 
             // Then
-            worker.expectMsg("AMT, BALANCE, TYPE, DATE");
-            worker.expectMsg("20, 20, Deposit, 2016-09-24T10:22:17+02:00");
-            worker.expectMsg("10, 30, Deposit, 2016-09-24T10:22:17+02:00");
-            worker.expectMsg("5, 25, Withdraw, 2016-09-24T10:22:17+02:00");
+            expectMsgEquals("AMT, BALANCE, TYPE, DATE");
+            expectMsgEquals("20, 20, Deposit, 2016-09-24T10:22:17+02:00");
+            expectMsgEquals("10, 30, Deposit, 2016-09-24T10:22:17+02:00");
+            expectMsgEquals("5, 25, Withdraw, 2016-09-24T10:22:17+02:00");
         }};
     }
 

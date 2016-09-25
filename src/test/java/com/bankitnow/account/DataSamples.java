@@ -1,6 +1,7 @@
 package com.bankitnow.account;
 
 import com.bankitnow.money.Balance;
+import scala.concurrent.duration.FiniteDuration;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -10,8 +11,11 @@ import java.util.UUID;
 import static com.bankitnow.money.Currency.EUR;
 import static com.bankitnow.money.Currency.USD;
 import static java.time.OffsetDateTime.of;
+import static java.util.concurrent.TimeUnit.*;
 
 interface DataSamples {
+
+    FiniteDuration untilTimeout = FiniteDuration.apply(200, MILLISECONDS);
 
     Balance zeroDollars = Balance.of(0, USD);
 
