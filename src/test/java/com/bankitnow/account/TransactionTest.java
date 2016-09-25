@@ -14,7 +14,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
-public class TransactionTest implements MoneySamples {
+public class TransactionTest implements DataSamples {
+
+    @Parameterized.Parameter
+    public String accountId;
+    @Parameterized.Parameter(value = 1)
+    public Balance operation;
+    @Parameterized.Parameter(value = 2)
+    public Balance balance;
+    @Parameterized.Parameter(value = 3)
+    public OffsetDateTime moment;
+    @Parameterized.Parameter(value = 4)
+    public Transaction.Type type;
+    @Parameterized.Parameter(value = 5)
+    public Boolean expectedResult;
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -28,24 +41,6 @@ public class TransactionTest implements MoneySamples {
                 {UUID.randomUUID().toString(), zeroDollars, tenEuros, OffsetDateTime.now(), null, false}
         });
     }
-
-    @Parameterized.Parameter
-    public String accountId;
-
-    @Parameterized.Parameter(value = 1)
-    public Balance operation;
-
-    @Parameterized.Parameter(value = 2)
-    public Balance balance;
-
-    @Parameterized.Parameter(value = 3)
-    public OffsetDateTime moment;
-
-    @Parameterized.Parameter(value = 4)
-    public Transaction.Type type;
-
-    @Parameterized.Parameter(value = 5)
-    public Boolean expectedResult;
 
     @Test
     public void should_validate_correct_build() {

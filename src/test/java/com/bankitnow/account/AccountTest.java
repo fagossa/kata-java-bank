@@ -7,18 +7,16 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.PrintStream;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
+import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AccountTest implements MoneySamples {
+public class AccountTest implements DataSamples {
 
     @Mock
     PrintStream out;
@@ -29,9 +27,9 @@ public class AccountTest implements MoneySamples {
     @Test
     public void should_increase_balance_when_deposit() {
         // Given
-        String anId = UUID.randomUUID().toString();
+        String anId = aRandomId();
         Account anAccount = new Account(anId, tenDollars, anEventJournal);
-        OffsetDateTime aMoment = OffsetDateTime.now();
+        OffsetDateTime aMoment = now();
         Transaction expectedTransaction = new Transaction.TransactionBuilder()
                 .forAccount(anId)
                 .withOperation(tenDollars)
@@ -50,14 +48,25 @@ public class AccountTest implements MoneySamples {
     }
 
     @Test
-    public void should_not_increase_balance_when_deposit_different_currency() {
+    public void should_not_increase_balance_when_journal_fails() {
         // Given
-        String anId = UUID.randomUUID().toString();
-        Account anAccount = new Account(anId, tenDollars, anEventJournal);
-        OffsetDateTime aMoment = OffsetDateTime.now();
+        Account anAccount = new Account(aRandomId(), tenDollars, anEventJournal);
 
         // When
-        anAccount.deposit(tenEuros, aMoment);
+        when(anEventJournal.send(any())).thenReturn(Try.failure(new IllegalStateException()));
+        anAccount.deposit(tenDollars, now());
+
+        // Then
+        assertThat(anAccount.balance()).isEqualTo(tenDollars);
+    }
+
+    @Test
+    public void should_not_increase_balance_when_deposit_different_currency() {
+        // Given
+        Account anAccount = new Account(aRandomId(), tenDollars, anEventJournal);
+
+        // When
+        anAccount.deposit(tenEuros, now());
 
         // Then
         verify(anEventJournal, never()).send(any());
@@ -66,8 +75,8 @@ public class AccountTest implements MoneySamples {
     @Test
     public void should_decrease_balance_when_withdraw() {
         // Given
-        String anId = UUID.randomUUID().toString();
-        OffsetDateTime aMoment = OffsetDateTime.now();
+        String anId = aRandomId();
+        OffsetDateTime aMoment = now();
         Account anAccount = new Account(anId, twentyDollars, anEventJournal);
         Transaction expectedTransaction = new Transaction.TransactionBuilder()
                 .forAccount(anId)
@@ -87,14 +96,25 @@ public class AccountTest implements MoneySamples {
     }
 
     @Test
-    public void should_decrease_balance_when_withdraw_different_currency() {
+    public void should_not_decrease_balance_when_journal_fails() {
         // Given
-        String anId = UUID.randomUUID().toString();
-        OffsetDateTime aMoment = OffsetDateTime.now();
-        Account anAccount = new Account(anId, tenDollars, anEventJournal);
+        Account anAccount = new Account(aRandomId(), twentyDollars, anEventJournal);
 
         // When
-        anAccount.withdraw(fiveEuros, aMoment);
+        when(anEventJournal.send(any())).thenReturn(Try.failure(new IllegalStateException()));
+        anAccount.withdraw(fiveDollars, now());
+
+        // Then
+        assertThat(anAccount.balance()).isEqualTo(twentyDollars);
+    }
+
+    @Test
+    public void should_decrease_balance_when_withdraw_different_currency() {
+        // Given
+        Account anAccount = new Account(aRandomId(), tenDollars, anEventJournal);
+
+        // When
+        anAccount.withdraw(fiveEuros, now());
 
         // Then
         verify(anEventJournal, never()).send(any());
@@ -103,9 +123,8 @@ public class AccountTest implements MoneySamples {
     @Test
     public void should_print_story() {
         // Given
-        String anId = UUID.randomUUID().toString();
-        Account anAccount = new Account(anId, zeroDollars, new VolatileJournal());
-        OffsetDateTime aMoment = aDateTime();
+        Account anAccount = new Account(aRandomId(), zeroDollars, new VolatileJournal());
+        OffsetDateTime aMoment = aFixedDateTime();
 
         // When
         anAccount.deposit(twentyDollars, aMoment);
@@ -129,9 +148,4 @@ public class AccountTest implements MoneySamples {
         verify(out, times(1)).println("5, 25, Withdraw, 2016-09-24T10:22:17+02:00");
     }
 
-    private OffsetDateTime aDateTime() {
-        final LocalDateTime localDateTime = LocalDateTime.parse("2016-09-24T10:22:17");
-        final ZoneOffset zoneOffset = ZoneOffset.of("+02:00");
-        return OffsetDateTime.of(localDateTime, zoneOffset);
-    }
 }
