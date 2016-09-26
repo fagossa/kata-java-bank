@@ -43,3 +43,11 @@ This is a simple implementation based on Pojos.
 ### with-akka
 
 This one is based on [Akka actors](http://doc.akka.io/docs/akka/2.4.10/general/actors.html).
+
+## Testing
+
+As a maven project you need to execute the following command in order to run the test:
+
+```
+$ mvn clean test
+```
