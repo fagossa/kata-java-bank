@@ -2,17 +2,22 @@ package com.bankitnow.account;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.event.Logging;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestProbe;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static java.time.OffsetDateTime.now;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AccountTest implements DataSamples {
 
     static ActorSystem system;
@@ -125,11 +130,11 @@ public class AccountTest implements DataSamples {
     }
 
     @Test
-    public void should_print_story() {
+    public void should_print_statements() {
         new JavaTestKit(system) {{
             // Given
             String anId = aRandomId();
-            final ActorRef volatileJournalRef = system.actorOf(VolatileJournal.props(getTestActor()), "Journal_" + anId);
+            final ActorRef volatileJournalRef = system.actorOf(VolatileJournal.props(), "Journal_" + anId);
             ActorRef anAccount = system.actorOf(Account.props(anId, zeroDollars, volatileJournalRef), "Account_" + anId);
             OffsetDateTime aMoment = aFixedDateTime();
 
@@ -137,7 +142,7 @@ public class AccountTest implements DataSamples {
             send(anAccount, new AccountEvents.Deposit(twentyDollars, aMoment));
             send(anAccount, new AccountEvents.Deposit(tenDollars, aMoment));
             send(anAccount, new AccountEvents.Withdraw(fiveDollars, aMoment));
-            send(anAccount, new AccountEvents.History(
+            send(anAccount, new AccountEvents.PrintStatements(
                     () -> "AMT, BALANCE, TYPE, DATE",
                     (transaction) -> String.format(
                             "%s, %s, %s, %s",
@@ -148,11 +153,13 @@ public class AccountTest implements DataSamples {
                     )
             ));
 
-            // Then
-            expectMsgEquals("AMT, BALANCE, TYPE, DATE");
-            expectMsgEquals("20, 20, Deposit, 2016-09-24T10:22:17+02:00");
-            expectMsgEquals("10, 30, Deposit, 2016-09-24T10:22:17+02:00");
-            expectMsgEquals("5, 25, Withdraw, 2016-09-24T10:22:17+02:00");
+            system.eventStream().subscribe(getRef(), Logging.Info.class);
+            assertThat(expectMsgClass(Logging.Info.class).message()).isIn(
+                    "AMT, BALANCE, TYPE, DATE",
+                    "20, 20, Deposit, 2016-09-24T10:22:17+02:00",
+                    "10, 30, Deposit, 2016-09-24T10:22:17+02:00",
+                    "5, 25, Deposit, 2016-09-24T10:22:17+02:00"
+            );
         }};
     }
 
