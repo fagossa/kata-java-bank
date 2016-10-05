@@ -1,6 +1,6 @@
 package com.bankitnow.account;
 
-import com.bankitnow.money.Balance;
+import com.bankitnow.money.Money;
 import javaslang.control.Try;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,9 +19,9 @@ public class TransactionTest implements DataSamples {
     @Parameterized.Parameter
     public String accountId;
     @Parameterized.Parameter(value = 1)
-    public Balance operation;
+    public Money operation;
     @Parameterized.Parameter(value = 2)
-    public Balance balance;
+    public Money money;
     @Parameterized.Parameter(value = 3)
     public OffsetDateTime moment;
     @Parameterized.Parameter(value = 4)
@@ -46,7 +46,7 @@ public class TransactionTest implements DataSamples {
     public void should_validate_correct_build() {
         final Try<Transaction> aTry = new Transaction.TransactionBuilder()
                 .forAccount(accountId)
-                .withNewBalance(balance)
+                .withNewBalance(money)
                 .withOperation(operation)
                 .at(moment)
                 .withType(type)

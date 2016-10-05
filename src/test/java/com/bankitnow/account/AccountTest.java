@@ -10,6 +10,8 @@ import java.io.PrintStream;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
+import static com.bankitnow.account.Transaction.TransactionBuilder;
+import static com.bankitnow.account.Transaction.Type;
 import static java.time.OffsetDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -30,12 +32,9 @@ public class AccountTest implements DataSamples {
         String anId = aRandomId();
         Account anAccount = new Account(anId, tenDollars, anEventJournal);
         OffsetDateTime aMoment = now();
-        Transaction expectedTransaction = new Transaction.TransactionBuilder()
-                .forAccount(anId)
-                .withOperation(tenDollars)
-                .withNewBalance(twentyDollars)
-                .at(aMoment)
-                .withType(Transaction.Type.Deposit)
+        Transaction expectedTransaction = new TransactionBuilder()
+                .forAccount(anId).at(aMoment).withType(Type.Deposit)
+                .withOperation(tenDollars).withNewBalance(twentyDollars)
                 .build().get();
 
         // When
@@ -78,12 +77,9 @@ public class AccountTest implements DataSamples {
         String anId = aRandomId();
         OffsetDateTime aMoment = now();
         Account anAccount = new Account(anId, twentyDollars, anEventJournal);
-        Transaction expectedTransaction = new Transaction.TransactionBuilder()
-                .forAccount(anId)
-                .withOperation(fiveDollars)
-                .withNewBalance(fifteenDollars)
-                .at(aMoment)
-                .withType(Transaction.Type.Withdraw)
+        Transaction expectedTransaction = new TransactionBuilder()
+                .forAccount(anId).at(aMoment).withType(Type.Withdraw)
+                .withOperation(fiveDollars).withNewBalance(fifteenDollars)
                 .build().get();
 
         // When
@@ -121,7 +117,43 @@ public class AccountTest implements DataSamples {
     }
 
     @Test
-    public void should_print_story() {
+    public void should_transfer_money_between_accounts() {
+        // Given a date
+        OffsetDateTime aMoment = aFixedDateTime();
+        // Given an account
+        String anOriginalId = aRandomId();
+        Account originalAccount = new Account(anOriginalId, tenDollars, anEventJournal);
+
+        // Given another account
+        String aDestinationId = aRandomId();
+        AccountJournal anotherEventJournal = mock(AccountJournal.class);
+        Account destinationAccount = new Account(aDestinationId, tenDollars, anotherEventJournal);
+
+        // Given expected transactions
+        Transaction expectedWithdraw = new TransactionBuilder()
+                .forAccount(anOriginalId).at(aMoment).withType(Type.Withdraw)
+                .withOperation(fiveDollars).withNewBalance(fiveDollars)
+                .build().get();
+        Transaction expectedDeposit = new TransactionBuilder()
+                .forAccount(aDestinationId).at(aMoment).withType(Type.Deposit)
+                .withOperation(fiveDollars).withNewBalance(fifteenDollars)
+                .build().get();
+
+        // When
+        when(anEventJournal.send(any(Transaction.class))).thenReturn(Try.success(expectedWithdraw));
+        when(anotherEventJournal.send(any(Transaction.class))).thenReturn(Try.success(expectedDeposit));
+        originalAccount.transfer(fiveDollars, destinationAccount, aMoment);
+
+        // Then
+        verify(anEventJournal).send(expectedWithdraw);
+        assertThat(originalAccount.balance()).isEqualTo(fiveDollars);
+
+        verify(anotherEventJournal).send(expectedDeposit);
+        assertThat(destinationAccount.balance()).isEqualTo(fifteenDollars);
+    }
+
+    @Test
+    public void should_print_account_history() {
         // Given
         Account anAccount = new Account(aRandomId(), zeroDollars, new VolatileJournal());
         OffsetDateTime aMoment = aFixedDateTime();

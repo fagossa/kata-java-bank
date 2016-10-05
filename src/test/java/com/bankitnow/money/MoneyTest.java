@@ -16,37 +16,37 @@ import static javaslang.control.Option.some;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
-public class BalanceTest {
+public class MoneyTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Balance.of(10, USD), Balance.of(10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
-                {Balance.of(10, USD), Balance.of(-10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
-                {Balance.of(-10, USD), Balance.of(10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
-                {Balance.of(-10, USD), Balance.of(-10, USD), some(Balance.of(20, USD)), some(Balance.of(0, USD))},
-                {Balance.of(10, USD), Balance.of(10, EUR), none(), none()},
-                {Balance.of(10, EUR), Balance.of(10, USD), none(), none()}
+                {Money.of(10, USD), Money.of(10, USD), some(Money.of(20, USD)), some(Money.of(0, USD))},
+                {Money.of(10, USD), Money.of(-10, USD), some(Money.of(20, USD)), some(Money.of(0, USD))},
+                {Money.of(-10, USD), Money.of(10, USD), some(Money.of(20, USD)), some(Money.of(0, USD))},
+                {Money.of(-10, USD), Money.of(-10, USD), some(Money.of(20, USD)), some(Money.of(0, USD))},
+                {Money.of(10, USD), Money.of(10, EUR), none(), none()},
+                {Money.of(10, EUR), Money.of(10, USD), none(), none()}
         });
     }
 
     @Parameterized.Parameter
-    public Balance firstBalance;
+    public Money firstMoney;
 
     @Parameterized.Parameter(value = 1)
-    public Balance secondBalance;
+    public Money secondMoney;
 
     @Parameterized.Parameter(value = 2)
-    public Option<Balance> totalPlus;
+    public Option<Money> totalPlus;
 
     @Parameterized.Parameter(value = 3)
-    public Option<Balance> totalMinus;
+    public Option<Money> totalMinus;
 
     @Test
     public void should_validate_same_currency_when_plus() {
         //When
-        final Try<Balance> aTry = firstBalance.plus(secondBalance);
-        final Option<Balance> result = aTry.toOption();
+        final Try<Money> aTry = firstMoney.plus(secondMoney);
+        final Option<Money> result = aTry.toOption();
 
         //Then
         assertThat(result).isEqualTo(totalPlus);
@@ -55,8 +55,8 @@ public class BalanceTest {
     @Test
     public void should_validate_same_currency_when_minus() {
         //When
-        final Try<Balance> aTry = firstBalance.minus(secondBalance);
-        final Option<Balance> result = aTry.toOption();
+        final Try<Money> aTry = firstMoney.minus(secondMoney);
+        final Option<Money> result = aTry.toOption();
 
         //Then
         assertThat(result).isEqualTo(totalMinus);

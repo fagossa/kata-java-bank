@@ -1,6 +1,6 @@
 package com.bankitnow.account;
 
-import com.bankitnow.money.Balance;
+import com.bankitnow.money.Money;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -13,19 +13,19 @@ import static java.time.OffsetDateTime.of;
 
 interface DataSamples {
 
-    Balance zeroDollars = Balance.of(0, USD);
+    Money zeroDollars = Money.of(0, USD);
 
-    Balance fiveDollars = Balance.of(5, USD);
+    Money fiveDollars = Money.of(5, USD);
 
-    Balance tenDollars = Balance.of(10, USD);
+    Money tenDollars = Money.of(10, USD);
 
-    Balance fifteenDollars = Balance.of(15, USD);
+    Money fifteenDollars = Money.of(15, USD);
 
-    Balance twentyDollars = Balance.of(20, USD);
+    Money twentyDollars = Money.of(20, USD);
 
-    Balance fiveEuros = Balance.of(5, EUR);
+    Money fiveEuros = Money.of(5, EUR);
 
-    Balance tenEuros = Balance.of(10, EUR);
+    Money tenEuros = Money.of(10, EUR);
 
     default String aRandomId() {
         return UUID.randomUUID().toString();
